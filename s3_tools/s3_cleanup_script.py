@@ -10,6 +10,7 @@
 #
 # Version
 # 1.0 - 2019-07-05 - First Version
+# 1.1 - Scripts only deleted contents, fixed to delete buckets also
 #
 # ############################################################################
 
@@ -20,8 +21,9 @@ whitelist = [
     'aws-glue-scripts-166588134205-us-east-1',
     'aws-glue-temporary-166588134205-us-east-1',
     'cloudtrail-awslogs-166588134205-6xoc2a1m-isengard-do-not-delete',
-    'do-not-delete-gatedgarden-audit-166588134205'
-    'myinstantreplay-backup'
+    'do-not-delete-gatedgarden-audit-166588134205',
+    'aws-logs-166588134205-us-east-1',
+    'myinstantreplay-backup',
     'pablo-ad-quickstart',
     'pablo.billing.cur',
     'pablo.cloudformation.templates',
@@ -37,7 +39,7 @@ whitelist = [
     'pablo.transfer.sftp'
 ]
 # Use 'Run' to delete, any other value will run a simulation.
-mode = 'Dev'
+mode = 'Run'
 
 def main():
     print('STARTING PROCESS...')
@@ -63,10 +65,14 @@ def should_i_delete_bucket(bucket_name, buckets_to_ignore):
 
 def delete_bucket(bucket_name):
     try:
+        print('DELETING CONTENTS....')
         s3 = boto3.resource('s3')
         bucket = s3.Bucket(bucket_name)
         bucket.objects.all().delete()
+        print('CONTENTS REMOVED, DELETING BUCKET...')
+        bucket.delete()
         print('DELETED')
+
     except Exception as e:
         print('ERROR: ' + str(e))
 

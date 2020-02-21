@@ -1,2 +1,2 @@
 # AWSSimpleTools
-Miscelanious AWS Cloud Tools
+Miscelanious AWS Cloud tools and code samples

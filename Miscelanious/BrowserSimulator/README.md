@@ -4,9 +4,10 @@ Being using it to perform validation of s3 access logs and cloudfront metrics. N
 config.json file with the following parameters:
 
  {
-   "cloudfront_domain": "<your cloudfront domain>",
-   "s3_bucket": "<your bucket>",
+   "cloudfront_domain": "",
+   "s3_bucket": "",
    "images": ["image1.jpg","image2.jpg"],
    "request_count": 100,
+   "delay": 5,
    "distribution": 0.2
  }

@@ -1,5 +1,40 @@
 AWSTemplateFormatVersion: "2010-09-09"
+#TODO - Security Groups
+#TODO - Instance Role
+#TODO - Automate HammerDB configuration
+#TODO - Output Parameters
+#TODO - Input Parameters
 Resources:
+  DBMonitoringRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      Description: 'Role to add monitoring to RDS instance'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole'
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "monitoring.rds.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+  HammerDBTestDatabase:
+    Type: 'AWS::RDS::DBInstance'
+    Properties:
+      DBInstanceIdentifier: 'HammerDBTestDB'
+      DBName: 'HammerDBTestDB'
+      DBInstanceClass: 'db.m5.large'
+      AllocatedStorage: 100
+      Iops: 1000
+      Engine: 'postgres'
+      EngineVersion: '12.5'
+      MasterUsername: 'awsuser'
+      MasterUserPassword: 'AwsUser123!'
+      EnablePerformanceInsights: 'True'
+      MonitoringInterval: '30'
+      MonitoringRoleArn: !GetAtt DBMonitoringRole.Arn
   HammerDBInstance:
     Type: AWS::EC2::Instance
     Properties:
@@ -20,11 +55,10 @@ Resources:
           Value: hammerdb-instance
       UserData:
         Fn::Base64: !Sub |
-          #!/bin/bash
-          set -x
-          exec > >(tee /var/log/user-data.log|logger -t user-data ) 2>&1
-
-          echo "1. Downloading HammerDB Tar"
-          mdir /home/hammerdb
-          cd /home/hammerdb
-          curl https://github.com/TPC-Council/HammerDB/releases/download/v4.1/HammerDB-4.1-Linux.tar.gz >> HammerDB-4.1-Linux.tar.gz
+          #!/bin/bash -xe
+          exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+            yum -y update
+            echo "1. Downloading HammerDB Tar"
+            cd /home/ec2-user
+            curl -L https://github.com/TPC-Council/HammerDB/releases/download/v4.1/HammerDB-4.1-Linux.tar.gz >> HammerDB-4.1-Linux.tar.gz
+            tar -zxvf HammerDB-4.1-Linux.tar.gz

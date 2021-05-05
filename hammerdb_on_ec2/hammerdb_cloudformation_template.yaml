@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Resources:
+  HammerDBInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: ami-067f5c3d5a99edc80
+      KeyName: key_generic.pem
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sdm"
+          Ebs:
+            VolumeType: "io1"
+            Iops: "200"
+            DeleteOnTermination: "false"
+            VolumeSize: "20"
+      Tags:
+        - Key: Environment
+          Value: hammerdb
+        - Key: Name
+          Value: hammerdb-instance
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -x
+          exec > >(tee /var/log/user-data.log|logger -t user-data ) 2>&1
+
+          echo "1. Downloading HammerDB Tar"
+          mdir /home/hammerdb
+          cd /home/hammerdb
+          curl https://github.com/TPC-Council/HammerDB/releases/download/v4.1/HammerDB-4.1-Linux.tar.gz >> HammerDB-4.1-Linux.tar.gz

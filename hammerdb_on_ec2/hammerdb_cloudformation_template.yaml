@@ -39,7 +39,7 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: t2.micro
-      ImageId: ami-067f5c3d5a99edc80
+      ImageId: ami-0cf6f5c8a62fa5da6
       KeyName: key_generic.pem
       BlockDeviceMappings:
         - DeviceName: "/dev/sdm"
@@ -62,3 +62,15 @@ Resources:
             cd /home/ec2-user
             curl -L https://github.com/TPC-Council/HammerDB/releases/download/v4.1/HammerDB-4.1-Linux.tar.gz >> HammerDB-4.1-Linux.tar.gz
             tar -zxvf HammerDB-4.1-Linux.tar.gz
+
+            echo "2. Install postgreSQL client"
+            tee /etc/yum.repos.d/pgdg.repo<<EOF
+            [pgdg12]
+            name=PostgreSQL 12 for RHEL/CentOS 7 - x86_64
+            baseurl=https://download.postgresql.org/pub/repos/yum/12/redhat/rhel-7-x86_64
+            enabled=1
+            gpgcheck=0
+            EOF
+            yum makecache
+
+

@@ -3,7 +3,7 @@ AWSTemplateFormatVersion: "2010-09-09"
 #TODO - Instance Role
 #TODO - Automate HammerDB configuration
 #TODO - Output Parameters
-#TODO - Input Parameters
+#TODO - Input Parameters (VPC, Subnet, DB Configuration)
 Resources:
   DBMonitoringRole:
     Type: "AWS::IAM::Role"

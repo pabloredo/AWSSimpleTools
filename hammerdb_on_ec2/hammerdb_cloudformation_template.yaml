@@ -23,8 +23,7 @@ Resources:
   HammerDBTestDatabase:
     Type: 'AWS::RDS::DBInstance'
     Properties:
-      DBInstanceIdentifier: 'HammerDBTestDB'
-      DBName: 'HammerDBTestDB'
+      DBName: 'tpcc'
       DBInstanceClass: 'db.m5.large'
       AllocatedStorage: 100
       Iops: 1000
@@ -37,6 +36,7 @@ Resources:
       MonitoringRoleArn: !GetAtt DBMonitoringRole.Arn
   HammerDBInstance:
     Type: AWS::EC2::Instance
+    DependsOn: HammerDBTestDatabase
     Properties:
       InstanceType: t2.micro
       ImageId: ami-0cf6f5c8a62fa5da6
@@ -54,23 +54,42 @@ Resources:
         - Key: Name
           Value: hammerdb-instance
       UserData:
-        Fn::Base64: !Sub |
+        Fn::Base64: !Sub
+        - |
           #!/bin/bash -xe
           exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
-            yum -y update
-            echo "1. Downloading HammerDB Tar"
-            cd /home/ec2-user
-            curl -L https://github.com/TPC-Council/HammerDB/releases/download/v4.1/HammerDB-4.1-Linux.tar.gz >> HammerDB-4.1-Linux.tar.gz
-            tar -zxvf HammerDB-4.1-Linux.tar.gz
+          yum -y update
+          
+          echo "1. Downloading HammerDB Tar"
+          cd /home/ec2-user
+          curl -L https://github.com/TPC-Council/HammerDB/releases/download/v4.1/HammerDB-4.1-Linux.tar.gz >> HammerDB-4.1-Linux.tar.gz
+          tar -zxvf HammerDB-4.1-Linux.tar.gz
 
-            echo "2. Install postgreSQL client"
-            tee /etc/yum.repos.d/pgdg.repo<<EOF
-            [pgdg12]
-            name=PostgreSQL 12 for RHEL/CentOS 7 - x86_64
-            baseurl=https://download.postgresql.org/pub/repos/yum/12/redhat/rhel-7-x86_64
-            enabled=1
-            gpgcheck=0
-            EOF
-            yum makecache
+          echo "2. Install postgreSQL client"
+          cat << EOF > /etc/yum.repos.d/pgdg.repo
+          [pgdg12]
+          name=PostgreSQL 12 for RHEL/CentOS 7 - x86_64
+          baseurl=https://download.postgresql.org/pub/repos/yum/12/redhat/rhel-7-x86_64
+          enabled=1
+          gpgcheck=0
+          EOF
+
+          yum makecache
+          yum -y install postgresql12
+
+          echo "3. Configure hammerdb"
+          sed -i 's/<pg_host>localhost/<pg_host>${db_endpoint}/g' HammerDB-4.1/config/postgresql.xml
+          sed -i 's/<pg_superuser>postgres/<pg_superuser>${db_user}/g' HammerDB-4.1/config/postgresql.xml
+          sed -i 's/<pg_superuserpass>postgres/<pg_superuserpass>${db_password}/g' HammerDB-4.1/config/postgresql.xml
+          sed -i 's/<pg_defaultdbase>postgres/<pg_defaultdbase>${db_database}/g' HammerDB-4.1/config/postgresql.xml
+          sed -i 's/<pg_user>tpcc/<pg_user>${db_user}/g' HammerDB-4.1/config/postgresql.xml
+          sed -i 's/<pg_pass>tpcc/<pg_pass>${db_password}!/g' HammerDB-4.1/config/postgresql.xml
+        - db_endpoint: !GetAtt HammerDBTestDatabase.Endpoint.Address
+          db_user: awsuser
+          db_password: AwsUser123!
+          db_database: tpcc
+
+
+
 
 

@@ -1,15 +1,16 @@
 # HammerDB Instance
 
-Deploy HammerDB on AWS EC2 Linux and Test Database. 
+Deploy HammerDB on AWS EC2 Linux and a Test Database. This is for reference only. 
+Consider removing database secrets from templates.
 
-## Deploy template with AWS CLI
+### Deploy template with AWS CLI
 ```
     aws cloudformation create-stack \
     --stack-name hammerdb \
     --template-body file://hammerdb_cloudformation_template.yaml \
     --capabilities CAPABILITY_IAM
 ```
-## Update template with AWS CLI
+### Update template with AWS CLI
 
 ```
     aws cloudformation update-stack \
@@ -18,3 +19,18 @@ Deploy HammerDB on AWS EC2 Linux and Test Database.
     --capabilities CAPABILITY_IAM
 ```
 
+### Using client on EC2
+
+```
+psql -h <db_endpoint> -U awsuser HammerDBTestDB
+```
+
+### Running hammerdb
+1. Set host and users under config/postgres.xml
+2. CD into HammerDB home directory
+3. Run './hammerdbcli'
+3. Run: 
+    'librarycheck'
+    'dbset db pg'
+    'buildschema'
+4. 

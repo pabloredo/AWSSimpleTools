@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: "2010-09-09"
+#TODO - Input Parameters
+#TODO - Target S3 Bucket
+#TODO - Reduce access scope for DMS Role
+Resources:
+  DMSRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      Description: 'Role to allow DMS to write to S3'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "dms.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+  DMSInstance:
+    Type: AWS::DMS::ReplicationInstance
+    Properties:
+      AllocatedStorage: 50
+      AllowMajorVersionUpgrade: true
+      AutoMinorVersionUpgrade: true
+      EngineVersion: 3.4.4
+      MultiAZ: false
+      PubliclyAccessible: true
+      ReplicationInstanceClass: dms.t3.medium
+  DMSSourceEndpoint:
+    Type: AWS::DMS::Endpoint
+    Properties:
+      DatabaseName: tpcc
+      EndpointType: source
+      EngineName: postgres
+      Username: awsuser
+      Password: AwsUser123!!
+      Port: 5432
+      ServerName: hhaawampjr0ey5.cy89ufkjvp6q.us-west-2.rds.amazonaws.com
+  DMSTargetEndpoint:
+    Type: AWS::DMS::Endpoint
+    Properties:
+      EndpointType: target
+      EngineName: s3
+      S3Settings:
+        BucketFolder: tpcc
+        BucketName: pablo.data.samples
+        ServiceAccessRoleArn: !GetAtt DMSRole.Arn
+      ExtraConnectionAttributes: 'CdcPath=cdc;cdcMaxBatchInterval=60;cdcMaxBatchInterval=32;dataFormat=csv;timestampColumnName=TIMESTAMP;DatePartitionEnabled=true'

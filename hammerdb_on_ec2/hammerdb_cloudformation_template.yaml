@@ -1,9 +1,11 @@
 AWSTemplateFormatVersion: "2010-09-09"
+#TODO - UserId and password as input parameter
 #TODO - Security Groups
 #TODO - Instance Role
 #TODO - Automate HammerDB configuration
 #TODO - Output Parameters
 #TODO - Input Parameters (VPC, Subnet, DB Configuration)
+#TODO - Add tags
 Resources:
   DBMonitoringRole:
     Type: "AWS::IAM::Role"
@@ -83,7 +85,7 @@ Resources:
           sed -i 's/<pg_superuserpass>postgres/<pg_superuserpass>${db_password}/g' HammerDB-4.1/config/postgresql.xml
           sed -i 's/<pg_defaultdbase>postgres/<pg_defaultdbase>${db_database}/g' HammerDB-4.1/config/postgresql.xml
           sed -i 's/<pg_user>tpcc/<pg_user>${db_user}/g' HammerDB-4.1/config/postgresql.xml
-          sed -i 's/<pg_pass>tpcc/<pg_pass>${db_password}!/g' HammerDB-4.1/config/postgresql.xml
+          sed -i 's/<pg_pass>tpcc/<pg_pass>${db_password}/g' HammerDB-4.1/config/postgresql.xml
         - db_endpoint: !GetAtt HammerDBTestDatabase.Endpoint.Address
           db_user: awsuser
           db_password: AwsUser123!

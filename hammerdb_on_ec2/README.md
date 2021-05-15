@@ -3,6 +3,8 @@
 Deploy HammerDB on AWS EC2 Linux and a Test Database. This is for reference only. 
 Consider removing database secrets from templates.
 
+This repo also contains a template to deploy dms to perform cdc from RDS to S3. 
+
 ### Deploy template with AWS CLI
 ```
     aws cloudformation create-stack \

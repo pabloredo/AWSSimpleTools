@@ -22,11 +22,20 @@ Resources:
                 - "monitoring.rds.amazonaws.com"
             Action:
               - "sts:AssumeRole"
+  CDCParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Description: 'PostgresSQL parameter group with rds.logical_replication=1 and wal_sender_timeout=0'
+      Family: "postgres12"
+      Parameters:
+        rds.logical_replication: 1
+        wal_sender_timeout: 0
   HammerDBTestDatabase:
     Type: 'AWS::RDS::DBInstance'
     Properties:
       DBName: 'tpcc'
       DBInstanceClass: 'db.m5.large'
+      DBParameterGroupName: !Ref CDCParameterGroup
       AllocatedStorage: 100
       Iops: 1000
       Engine: 'postgres'

@@ -35,7 +35,7 @@ Resources:
       EndpointType: source
       EngineName: postgres
       Username: awsuser
-      Password: AwsUser123!!
+      Password: AwsUser123!
       Port: 5432
       ServerName: hhaawampjr0ey5.cy89ufkjvp6q.us-west-2.rds.amazonaws.com
   DMSTargetEndpoint:
@@ -45,6 +45,29 @@ Resources:
       EngineName: s3
       S3Settings:
         BucketFolder: tpcc
-        BucketName: pablo.data.samples
+        BucketName: pablo.kinesis.demo
         ServiceAccessRoleArn: !GetAtt DMSRole.Arn
       ExtraConnectionAttributes: 'CdcPath=cdc;cdcMaxBatchInterval=60;cdcMaxBatchInterval=32;dataFormat=csv;timestampColumnName=TIMESTAMP;DatePartitionEnabled=true'
+  DMSCDCTask:
+    Type: AWS::DMS::ReplicationTask
+    Properties:
+      MigrationType: full-load-and-cdc
+      ReplicationInstanceArn: !Ref DMSInstance
+      ReplicationTaskSettings: '{ "Logging": { "EnableLogging": true }}'
+      SourceEndpointArn:  !Ref DMSSourceEndpoint
+      TargetEndpointArn: !Ref DMSTargetEndpoint
+      TableMappings: '{
+        "rules": [
+          {
+            "rule-type": "selection",
+            "rule-id": "1",
+            "rule-name": "1",
+            "object-locator": {
+              "schema-name": "public",
+              "table-name": "%"
+            },
+            "rule-action": "include"
+          }
+        ]
+      }'
+

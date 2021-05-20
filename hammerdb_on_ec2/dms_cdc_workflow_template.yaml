@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
-#TODO - Input Parameters
 #TODO - Target S3 Bucket
+#TODO - Input Parameters
 #TODO - Reduce access scope for DMS Role
 Resources:
   DMSRole:

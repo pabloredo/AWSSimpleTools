@@ -6,6 +6,9 @@ AWSTemplateFormatVersion: "2010-09-09"
 #TODO - Output Parameters
 #TODO - Input Parameters (VPC, Subnet, DB Configuration)
 #TODO - Add tags
+Parameters:
+  DBUser:
+  DBPassword:
 Resources:
   DBMonitoringRole:
     Type: "AWS::IAM::Role"

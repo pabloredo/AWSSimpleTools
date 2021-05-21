@@ -1,7 +1,32 @@
 AWSTemplateFormatVersion: "2010-09-09"
-#TODO - Target S3 Bucket
-#TODO - Input Parameters
-#TODO - Reduce access scope for DMS Role
+#TODO - Reduce scope for DMS Role
+Parameters:
+  SourceDBEndpoint:
+    Type: String
+    Description: "Database host name."
+  SourceDBPort:
+    Type: Number
+    Default: 5432
+    Description: "Database port number."
+  SourceDBUser:
+    Type: String
+    Default: awsuser
+    Description: "Database user."
+  SourceDBPassword:
+    Type: String
+    Default: AwsUser123!
+    Description: "Database password."
+  TargetBucket:
+    Type: String
+    Description: "Target bucket for bulk load and cdc."
+  ReplicationInstanceClass:
+    Type: String
+    Default: dms.t3.medium
+    AllowedValues:
+      - dms.t3.medium
+      - dms.t2.large
+      - dms.c4.2xlarge
+    Description: "Replication instance size."
 Resources:
   DMSRole:
     Type: "AWS::IAM::Role"
@@ -27,29 +52,35 @@ Resources:
       EngineVersion: 3.4.4
       MultiAZ: false
       PubliclyAccessible: true
-      ReplicationInstanceClass: dms.t3.medium
+      ReplicationInstanceClass: !Ref ReplicationInstanceClass
   DMSSourceEndpoint:
     Type: AWS::DMS::Endpoint
     Properties:
       DatabaseName: tpcc
       EndpointType: source
       EngineName: postgres
-      Username: awsuser
-      Password: AwsUser123!
-      Port: 5432
-      ServerName: hhaawampjr0ey5.cy89ufkjvp6q.us-west-2.rds.amazonaws.com
+      Username: !Ref SourceDBUser
+      Password: !Ref SourceDBPassword
+      Port: !Ref SourceDBPort
+      ServerName: !Ref SourceDBEndpoint
   DMSTargetEndpoint:
     Type: AWS::DMS::Endpoint
+    DependsOn:
+      - DMSRole
     Properties:
       EndpointType: target
       EngineName: s3
       S3Settings:
         BucketFolder: tpcc
-        BucketName: pablo.kinesis.demo
+        BucketName: !Ref TargetBucket
         ServiceAccessRoleArn: !GetAtt DMSRole.Arn
-      ExtraConnectionAttributes: 'CdcPath=cdc;cdcMaxBatchInterval=60;cdcMaxBatchInterval=32;dataFormat=csv;timestampColumnName=TIMESTAMP;DatePartitionEnabled=true'
+      ExtraConnectionAttributes: 'CdcPath=cdc;cdcMaxBatchInterval=60;cdcMinFileSize=32;dataFormat=csv;timestampColumnName=TIMESTAMP;DatePartitionEnabled=true'
   DMSCDCTask:
     Type: AWS::DMS::ReplicationTask
+    DependsOn:
+      - DMSSourceEndpoint
+      - DMSTargetEndpoint
+      - DMSInstance
     Properties:
       MigrationType: full-load-and-cdc
       ReplicationInstanceArn: !Ref DMSInstance

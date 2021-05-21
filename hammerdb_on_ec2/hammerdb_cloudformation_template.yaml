@@ -1,14 +1,27 @@
 AWSTemplateFormatVersion: "2010-09-09"
-#TODO - UserId and password as input parameter
+#TODO - Automate HammerDB configuration
 #TODO - Security Groups
 #TODO - Instance Role
-#TODO - Automate HammerDB configuration
-#TODO - Output Parameters
-#TODO - Input Parameters (VPC, Subnet, DB Configuration)
+#TODO - Input Parameters (VPC, Subnet)
 #TODO - Add tags
 Parameters:
   DBUser:
+    Type: String
+    Default: awsuser
+    Description: "Database user."
   DBPassword:
+    Type: String
+    Default: AwsUser123!
+    Description: "Database password."
+  DBInstanceClass:
+    Type: String
+    Default: db.m5.large
+    AllowedValues:
+      - db.m5.large
+      - db.m5.8xlarge
+      - db.m5.16xlarge
+      - db.m5.24xlarge
+    Description: "Database instance size."
 Resources:
   DBMonitoringRole:
     Type: "AWS::IAM::Role"
@@ -37,14 +50,14 @@ Resources:
     Type: 'AWS::RDS::DBInstance'
     Properties:
       DBName: 'tpcc'
-      DBInstanceClass: 'db.m5.large'
+      DBInstanceClass: !Ref DBInstanceClass
       DBParameterGroupName: !Ref CDCParameterGroup
       AllocatedStorage: 100
       Iops: 1000
       Engine: 'postgres'
       EngineVersion: '12.5'
-      MasterUsername: 'awsuser'
-      MasterUserPassword: 'AwsUser123!'
+      MasterUsername: !Ref DBUser
+      MasterUserPassword: !Ref DBPassword
       EnablePerformanceInsights: 'True'
       MonitoringInterval: '30'
       MonitoringRoleArn: !GetAtt DBMonitoringRole.Arn
@@ -98,11 +111,62 @@ Resources:
           sed -i 's/<pg_defaultdbase>postgres/<pg_defaultdbase>${db_database}/g' HammerDB-4.1/config/postgresql.xml
           sed -i 's/<pg_user>tpcc/<pg_user>${db_user}/g' HammerDB-4.1/config/postgresql.xml
           sed -i 's/<pg_pass>tpcc/<pg_pass>${db_password}/g' HammerDB-4.1/config/postgresql.xml
-        - db_endpoint: !GetAtt HammerDBTestDatabase.Endpoint.Address
-          db_user: awsuser
-          db_password: AwsUser123!
-          db_database: tpcc
 
+          echo "4. Generate test scrip"
+          cat << EOF >> pgrun.tcl
+          #!/bin/tclsh
+          proc runtimer { seconds } {
+          set x 0
+          set timerstop 0
+          while {!$timerstop} {
+          incr x
+          after 1000
+            if { ![ expr {$x % 60} ] } {
+              set y [ expr $x / 60 ]
+              puts "Timer: $y minutes elapsed"
+            }
+          update
+          if {  [ vucomplete ] || $x eq $seconds } { set timerstop 1 }
+            }
+          return
+          }
+          puts "SETTING CONFIGURATION"
+          dbset db pg
+          diset tpcc pg_driver timed
+          diset tpcc pg_rampup 5
+          diset tpcc pg_duration 25
+          diset tpcc pg_vacuum true
+          print dict
+          vuset logtotemp 1
+          tcset logtotemp 1
+          tcset timestamps 1
+          loadscript
+          puts "SEQUENCE STARTED"
+          foreach z { 1 16 32 64 128 256 512 } {
+          puts "$z VU TEST"
+          vuset vu $z
+          vucreate
+          tcstart
+          vurun
+          runtimer 9000
+          vudestroy
+          tcstop
+          after 5000
+          }
+          puts "TEST SEQUENCE COMPLETE"
+          exit
+          EOF
+        - db_endpoint: !GetAtt HammerDBTestDatabase.Endpoint.Address
+          db_user: !Ref DBUser
+          db_password: !Ref DBPassword
+          db_database: tpcc
+Outputs:
+  InstancePublicDNS:
+    Description: 'Instance Public DNS'
+    Value: !GetAtt HammerDBInstance.PublicDnsName
+  DBEnpoint:
+    Description: 'Test Database Endpoint'
+    Value: !GetAtt HammerDBTestDatabase.Endpoint.Address
 
 
 

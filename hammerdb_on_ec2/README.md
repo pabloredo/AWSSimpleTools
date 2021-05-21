@@ -12,6 +12,7 @@ For reference on the HammerDB TPC test see https://www.hammerdb.com/docs/ch03s05
     aws cloudformation create-stack \
     --stack-name hammerdb \
     --template-body file://hammerdb_cloudformation_template.yaml \
+    --parameters ParameterKey=DBInstanceClass,ParameterValue=db.m5.large \
     --capabilities CAPABILITY_IAM
 ````
 

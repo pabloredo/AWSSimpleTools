@@ -53,6 +53,9 @@ Resources:
       MultiAZ: false
       PubliclyAccessible: true
       ReplicationInstanceClass: !Ref ReplicationInstanceClass
+      Tags:
+        - Key: Environment
+          Value: hammerdb_cdc
   DMSSourceEndpoint:
     Type: AWS::DMS::Endpoint
     Properties:
@@ -63,6 +66,9 @@ Resources:
       Password: !Ref SourceDBPassword
       Port: !Ref SourceDBPort
       ServerName: !Ref SourceDBEndpoint
+      Tags:
+        - Key: Environment
+          Value: hammerdb_cdc
   DMSTargetEndpoint:
     Type: AWS::DMS::Endpoint
     DependsOn:
@@ -75,6 +81,9 @@ Resources:
         BucketName: !Ref TargetBucket
         ServiceAccessRoleArn: !GetAtt DMSRole.Arn
       ExtraConnectionAttributes: 'CdcPath=cdc;cdcMaxBatchInterval=60;cdcMinFileSize=32;dataFormat=csv;timestampColumnName=TIMESTAMP;DatePartitionEnabled=true'
+      Tags:
+        - Key: Environment
+          Value: hammerdb_cdc
   DMSCDCTask:
     Type: AWS::DMS::ReplicationTask
     DependsOn:
@@ -101,4 +110,7 @@ Resources:
           }
         ]
       }'
+      Tags:
+        - Key: Environment
+          Value: hammerdb_cdc
 

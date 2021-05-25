@@ -30,7 +30,7 @@ puts "SEQUENCE STARTED"
 foreach z { 1 16 32 64 128 256 512 } {
 puts "$z VU TEST"
 vuset vu $z
-vucrezte
+vucreate
 tcstart
 vurun
 runtimer 9000

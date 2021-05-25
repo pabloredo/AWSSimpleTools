@@ -20,7 +20,15 @@ Parameters:
       - db.m5.8xlarge
       - db.m5.16xlarge
       - db.m5.24xlarge
-    Description: "Database instance size."
+    Description: "Database instance size (CPU, RAM)."
+  DBIops:
+    Type: Number
+    Default: 1000
+    Description: "Database provisioned IOPs"
+  DBStorage:
+    Type: Number
+    Default: 100
+    Description: "Database provisioned Storage"
 Resources:
   DBMonitoringRole:
     Type: "AWS::IAM::Role"
@@ -51,8 +59,8 @@ Resources:
       DBName: 'tpcc'
       DBInstanceClass: !Ref DBInstanceClass
       DBParameterGroupName: !Ref CDCParameterGroup
-      AllocatedStorage: 100
-      Iops: 1000
+      AllocatedStorage: !Ref DBStorage
+      Iops: !Ref DBIops
       Engine: 'postgres'
       EngineVersion: '12.5'
       MasterUsername: !Ref DBUser

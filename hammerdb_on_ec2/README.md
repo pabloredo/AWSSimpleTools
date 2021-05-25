@@ -13,6 +13,7 @@ For reference on the HammerDB TPC test see https://www.hammerdb.com/docs/ch03s05
     --stack-name hammerdb \
     --template-body file://hammerdb_cloudformation_template.yaml \
     --parameters ParameterKey=DBInstanceClass,ParameterValue=db.m5.large \
+    ParameterKey=DBIops,ParameterValue=3000 \
     --capabilities CAPABILITY_IAM
 ````
 
@@ -22,7 +23,7 @@ For reference on the HammerDB TPC test see https://www.hammerdb.com/docs/ch03s05
 2. Run ``./hammerdbcli``
 3. Run ``librarycheck``
 4. Run ``dbset db pg``
-5. Run ``buildschema``. Wait 2 - 5 min until you see message "ALL VIRTUAL USERS COMPLETE"
+5. Run ``buildschema``. Wait until you see message "ALL VIRTUAL USERS COMPLETE" (~2 min)
 6. Exit the hammerdb cli by typing  ``exit``
 
 ### 3. Validate schema is there
@@ -36,8 +37,19 @@ SET d_state='Ud'
 WHERE d_state='Ut';
 ```
 
-### 4. Run the load test, monitor tps.
+### 4. Run the load test a monitor tpm.
 
 1. From the HammerDB home directory run ```./hammerdbcli auto ../pgrun.tcl```
-2. Monitor tps from the cli.
+2. Monitor transactions per minute (tpm) from the cli.
 
+### 5. Deploy the cdc replication with DMS
+
+```  
+    aws cloudformation create-stack \
+    --stack-name dmscdcworkflow \
+    --template-body file://dms_cdc_workflow_template.yaml \
+    --parameters \
+    ParameterKey=SourceDBEndpoint,ParameterValue=hh1ny0hdtbd6deh.cy89ufkjvp6q.us-west-2.rds.amazonaws.com \
+    ParameterKey=TargetBucket,ParameterValue=pablo.data.lake \
+    --capabilities CAPABILITY_IAM
+````
